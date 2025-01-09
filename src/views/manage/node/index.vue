@@ -80,6 +80,7 @@
       <el-table-column label="详细地址" align="left" prop="address" show-overflow-tooltip/>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template #default="scope">
+          <el-button link type="primary" @click="getNodeInfo(scope.row)" v-hasPermi="['manage:vm:list']">查看详情</el-button>
           <el-button link type="primary" @click="handleUpdate(scope.row)" v-hasPermi="['manage:node:edit']">修改</el-button>
           <el-button link type="primary" @click="handleDelete(scope.row)" v-hasPermi="['manage:node:remove']">删除</el-button>
         </template>
@@ -131,6 +132,24 @@
         </div>
       </template>
     </el-dialog>
+
+    <!-- 查看详情对话框 -->
+    <el-dialog title="点位详情" v-model="vmInfoOpen" width="600px" append-to-body>
+      <el-table :data="vmList">
+        <el-table-column label="序号" type="index" width="50" align="center" />
+        <el-table-column label="设备编号" align="center" prop="innerCode" />
+        <el-table-column label="设备状态" align="center" prop="vmStatus">
+          <template #default="scope">
+            <span>{{scope.row.runningStatus != null ? JSON.parse(scope.row.runningStatus).status == true ? '正常' : '异常' : '异常'}}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="最后一次供货时间" align="center" prop="lastSupplyTime">
+          <template #default="scope">
+            <span>{{ parseTime(scope.row.lastSupplyTime, '{y}-{m}-{d} {h}:{i}:{s}') }}</span>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-dialog>
   </div>
 </template>
 
@@ -138,7 +157,9 @@
 import {listNode, getNode, delNode, addNode, updateNode} from "@/api/manage/node";
 import {listRegion} from "@/api/manage/region";
 import {listPartner} from "@/api/manage/partner";
+import {listVm} from "@/api/manage/vm"
 import { loadAllParams } from "@/api/page";
+import {parseTime} from "../../../utils/ruoyi.js";
 
 const {proxy} = getCurrentInstance();
 const {business_type} = proxy.useDict('business_type');
@@ -301,7 +322,7 @@ function handleExport() {
   pageSize: 10000,
 });*/
 
-/* 查询区域列表 */
+/** 查询区域列表 */
 const regionList = ref([]);
 function getRegionList() {
   listRegion(loadAllParams).then(response => {
@@ -309,13 +330,26 @@ function getRegionList() {
   });
 }
 
-/* 查询合作商列表 */
+/** 查询合作商列表 */
 const partnerList = ref([]);
 function getPartnerList() {
   listPartner(loadAllParams).then(response => {
     partnerList.value = response.rows;
   });
 }
+
+/** 查看详情 */
+const vmList = ref([]);
+const vmInfoOpen = ref(false);
+function getNodeInfo(row){
+  // 根据点位id，查询设备列表
+  loadAllParams.nodeId = row.id;
+  listVm(loadAllParams).then(response => {
+    vmList.value = response.rows;
+  })
+  vmInfoOpen.value = true;
+}
+
 getPartnerList();
 getRegionList();
 
