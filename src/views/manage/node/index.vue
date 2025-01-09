@@ -309,7 +309,7 @@ function getRegionList() {
   });
 }
 
-/* 查询区域列表 */
+/* 查询合作商列表 */
 const partnerList = ref([]);
 function getPartnerList() {
   listPartner(loadAllParams).then(response => {
